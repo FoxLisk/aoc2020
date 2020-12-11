@@ -20,6 +20,7 @@ class FloorPlan(object):
                 self.state = self.DEAD
             elif l == self.EMPTY:
                 self.state = self.EMPTY
+            self.next_state = None
 
         def __repr__(self):
             return self.state
@@ -36,12 +37,26 @@ class FloorPlan(object):
         def live(self):
             if self.state == self.EMPTY:
                 raise ValueError()
-            self.state = self.ALIVE
+            self.next_state = self.ALIVE
 
         def die(self):
             if self.state == self.EMPTY:
                 raise ValueError()
-            self.state = self.DEAD
+            self.next_state = self.DEAD
+
+        def effect(self):
+            changed = False
+            if self.state == self.EMPTY:
+                if self.next_state is not None:
+                    raise ValueError()
+            elif self.next_state is None:
+                raise ValueError()
+            else:
+                if self.state != self.next_state:
+                    changed = True
+                self.state = self.next_state
+                # self.next_state = None
+            return changed
 
     def __init__(self, floorplan):
         self._raw = floorplan
@@ -75,12 +90,11 @@ class FloorPlan(object):
             ys = [y - 1, y, y + 1]
         return [(_x, _y) for (_x, _y) in product(xs, ys) if not (x == _x and y == _y)]
 
-    def step(self):
+    def step_p1(self):
         new_neighbors = [
             row[:]
             for row in self.neighbors
         ]
-        changed = False
         for y in range(self.height):
             for x in range(self.width):
                 cell = self.state[y][x]
@@ -88,23 +102,75 @@ class FloorPlan(object):
                     continue
                 if self.neighbors[y][x] == 0:
                     if cell.is_dead():
-                        changed = True
                         for ix, iy in self.neighbor_indices(x, y):
                             new_neighbors[iy][ix] += 1
                     cell.live()
                 if self.neighbors[y][x] >= 4:
                     if cell.is_alive():
-                        changed = True
                         for ix, iy in self.neighbor_indices(x, y):
                             new_neighbors[iy][ix] -= 1
                     cell.die()
         self.neighbors = new_neighbors
         self._steps += 1
+        return self.effect()
+
+    def void(self):
+        pass
+
+    def rays(self):
+        self.void()
+        return [
+            (-1, -1), (0, -1), (1, -1),
+            (-1, 0), (1, 0),
+            (-1, 1), (0, 1), (1, 1),
+        ]
+
+    def is_valid_index(self, x, y):
+        return (0 <= x < self.width) and (0 <= y < self.height)
+
+    def effect(self):
+        changed = False
+        for row in self.state:
+            for c in row:
+                changed = c.effect() or changed
         return changed
 
-    def sim(self):
+    def step(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                cell = self.state[y][x]
+                if cell.is_empty():
+                    continue
+                visible = 0
+                for dx, dy in self.rays():
+                    nx, ny = x, y
+                    while True:
+                        nx += dx
+                        ny += dy
+                        if not self.is_valid_index(nx, ny):
+                            break
+                        if self.state[ny][nx].is_alive():
+                            visible += 1
+                            break
+                        elif self.state[ny][nx].is_dead():
+                            # seeing an empty seat counts, the fact that there might be an
+                            # occupied seat in that direction is irrelevant
+                            break
+                if visible == 0:
+                    cell.live()
+                elif visible >= 5:
+                    cell.die()
+
+        self._steps += 1
+        changed = self.effect()
+        return changed
+
+    def sim(self, phase=2):
         while True:
-            changed = self.step()
+            if phase == 1:
+                changed = self.step_p1()
+            else:
+                changed = self.step()
             if not changed:
                 return self._steps
 

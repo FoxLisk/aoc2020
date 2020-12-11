@@ -59,6 +59,30 @@ L.LLLLL.LL'''
 
             , str(self.floorplan)
         )
+        self.floorplan.step_p1()
+        self.assertEqual('''#.##.##.##
+#######.##
+#.#.#..#..
+####.##.##
+#.##.##.##
+#.#####.##
+..#.#.....
+##########
+#.######.#
+#.#####.##''', str(self.floorplan))
+        self.floorplan.step_p1()
+        self.assertEqual('''#.LL.L#.##
+#LLLLLL.L#
+L.L.L..L..
+#LLL.LL.L#
+#.LL.LL.LL
+#.LLLL#.##
+..L.L.....
+#LLLLLLLL#
+#.LLLLLL.L
+#.#LLLL.##''', str(self.floorplan))
+
+    def test_phase2(self):
         self.floorplan.step()
         self.assertEqual('''#.##.##.##
 #######.##
@@ -71,17 +95,32 @@ L.LLLLL.LL'''
 #.######.#
 #.#####.##''', str(self.floorplan))
         self.floorplan.step()
-        self.assertEqual('''#.LL.L#.##
-#LLLLLL.L#
+        self.assertEqual('''#.LL.LL.L#
+#LLLLLL.LL
 L.L.L..L..
-#LLL.LL.L#
-#.LL.LL.LL
-#.LLLL#.##
+LLLL.LL.LL
+L.LL.LL.LL
+L.LLLLL.LL
 ..L.L.....
-#LLLLLLLL#
+LLLLLLLLL#
 #.LLLLLL.L
-#.#LLLL.##''', str(self.floorplan))
+#.LLLLL.L#''', str(self.floorplan))
+        self.floorplan.step()
+        self.assertEqual('''#.L#.##.L#
+#L#####.LL
+L.#.#..#..
+##L#.##.##
+#.##.#L.##
+#.#####.#L
+..#.#.....
+LLL####LL#
+#.L#####.L
+#.L####.L#''', str(self.floorplan))
 
     def test_sim(self):
-        self.floorplan.sim()
+        self.floorplan.sim(phase=1)
         self.assertEqual(37, self.floorplan.num_alive())
+
+    def test_sim_p2(self):
+        self.floorplan.sim()
+        self.assertEqual(26, self.floorplan.num_alive())
