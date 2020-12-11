@@ -43,6 +43,11 @@ def arrangements_of(adapters):
 
     the fully general solution seems way harder? like, if the input were just the numbers
     1-100, this would completely fail.
+
+    ok i looked it up it's actually pretty easy, i'm just stupid
+    you just like... go through the list of adapters and calculate how many ways
+    you can get to each adapter, and then add the next one. straightforward DP solution
+    that i'm too dumb to figure out on my own. oh well.
     '''
     if len(adapters) < 3:
         return [adapters]
